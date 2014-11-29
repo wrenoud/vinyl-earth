@@ -1,0 +1,22 @@
+{
+  "name": "vinyl-earth",
+  "version": "0.0.0",
+  "description": "Generates random number series from geographic tracklines",
+  "main": "vinyl-earth.js",
+  "scripts": {
+    "test": "test\\run_tests.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wrenoud/vinyl-earth.git"
+  },
+  "author": "Weston Renoud",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wrenoud/vinyl-earth/issues"
+  },
+  "homepage": "https://github.com/wrenoud/vinyl-earth",
+  "devDependencies": {
+    "qunitjs": "^1.15.0"
+  }
+}
