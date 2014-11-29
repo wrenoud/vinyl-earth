@@ -4,7 +4,7 @@
   "description": "Generates random number series from geographic tracklines",
   "main": "vinyl-earth.js",
   "scripts": {
-    "test": "test\\run_tests.js"
+    "test": "node tests\\tests.js"
   },
   "repository": {
     "type": "git",
@@ -17,6 +17,6 @@
   },
   "homepage": "https://github.com/wrenoud/vinyl-earth",
   "devDependencies": {
-    "qunitjs": "^1.15.0"
+    "qunit-cli": "^0.1.4"
   }
 }
