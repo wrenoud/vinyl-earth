@@ -116,9 +116,9 @@
         // update the url for sharing
         var oldUrl = window.location.href
         var newUrl = '';
-        var trackid = "#"+start_lat+","+start_lon+","+end_lat+","+end_lon
-        if(oldUrl.indexOf('#') > 0){
-          newUrl = oldUrl.replace(/#.*$/g,trackid);
+        var trackid = "?ll="+start_lat+","+start_lon+","+end_lat+","+end_lon+"&count="+$('#seed_count').val()+"&reducer="+encodeURIComponent($('#reducer').val());
+        if(oldUrl.indexOf('?') > 0){
+          newUrl = oldUrl.replace(/\?.*$/g,trackid);
         }else{
           newUrl = oldUrl + trackid;
         }
@@ -148,12 +148,14 @@
 
       // check for points in the href, set the as the points if found
       var start_start_lat, start_start_lon, start_end_lat, start_end_lon;
-      var matches = /#(.*?),(.*?),(.*?),(.*)$/.exec(window.location.href);
+      var matches = /\?ll=(.*?),(.*?),(.*?),(.*)&count=(.*?)&reducer=(.*)$/.exec(window.location.href);
       if(matches){
         start_start_lat = matches[1];
         start_start_lon = matches[2];
         start_end_lat = matches[3];
-        start_end_lon = matches[4];          
+        start_end_lon = matches[4];
+        $('#seed_count').val(matches[5]);
+        $('#reducer').val(encodeURIComponent(matches[6]));
       }else{
         start_start_lat = 40.7127;
         start_start_lon = -74.0059;
