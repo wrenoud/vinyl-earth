@@ -1,27 +1,24 @@
 
+'use strict';
+if (typeof module!='undefined' && module.exports) var LatLonE = require('node_modules/geodesy-libraries/latlon-vincenty.js'); // CommonJS (Node.js)
+
 // new namespace object defined by this file
 var vinylEarth = {};
 // import used by this file
 // var dependency = dependency || require('./dependency');  
 (function(){
 
-  vinylEarth.Point = function(coord,t){
-    if(coord.length < 2) throw "Point requires minimum of x and y coordinates";
-    this.x = coord[0];
-    this.y = coord[1];
-    if(coord.length === 3){
-      this.z = coord[2];
-      this.dim = 3;
-    }else{
-      this.dim = 2;
-    }
-    this.t = t;
+  // extend LatLonE to contain a date
+  vinylEarth.LatLonE = function(lat, lon, height, date) {
+    LatLonE.call(this, lat, lon, undefined, height);
+    this.date = date;
   }
+  vinylEarth.LatLonE.prototype = Object.create(LatLonE.prototype);
 
   /**
    * [Segment description]
-   * @param {Point2D|Point2D} start   the starting point of the segment
-   * @param {Point2D|Point2D} end     the end point of the segment
+   * @param {LatLonE} start   the starting point of the segment
+   * @param {LatLonE} end     the end point of the segment
    * @param {Object}          options options include 'distanceMode' = ['strait'|'geographic']
    */
   vinylEarth.Segment = function(start, end, options){
@@ -29,56 +26,73 @@ var vinylEarth = {};
     this.start = start;
     this.end = end;
 
-    if(start.dim !== end.dim) throw "Dimension mismatch in segment endpoints";
-    
-    var _distance = null;
-    this.distance = function(){
-      if(_distance === null){
-        switch(this.options.distanceMode){
-          case("geographic"):
-            throw "Geographic distances not yet supported.";
-            break;
-          case("strait"):
-          default:
-            _distance = 0;
-            for(var i = 0; i < this.end.dim; i++){
-              var dim = ['x','y','z'][i];
-              _distance += Math.pow(this.end[dim]-this.start[dim],2);
-            }
-            _distance = Math.sqrt(_distance);
-        }
-      }
-      return _distance;
+    var _inverse = start.inverse(end);
+
+    this.getDistance = function(){
+      return _inverse.distance;
     };
-    var _speed = null;
-    this.speed = function(){
-      if((this.end.t || this.end.t === 0) && (this.start.t || this.start.t === 0)){
-        return this.distance() / (this.end.t-this.start.t);
+
+    this.getDuration = function(){
+      if(this.end.date && this.start.date){
+        return this.end.date - this.start.date;
       }else{
-        return undefined;
+        return null;
       }
+    };
+
+    this.getSpeed = function(){
+      if(this.getDuration()){
+        return _inverse.distance / this.getDuration();
+      }else{
+        return null;
+      }
+    }
+
+    this.pointByTime = function(time){
+      return this.pointByDistance( time * this.getSpeed());
+    }
+    this.pointByDistance = function(distance){
+      if(distance > _inverse.distance){
+        throw "Distance no on the line";
+      }
+      var point = start.destinationPoint(_inverse.initialBearing, distance);
+      if(this.getDuration()){
+        point.date = this.start.date + this.getDuration() * (distance / _inverse.distance);
+      }
+      return point;
     }
   }
 
   vinylEarth.Track = function(options){
     this.options = options || {};
-    this._track = [];
-    this._segments = [];
+    var _track = [];
+    var _segments = [];
+    var _segments_distances = [];
     var _distance = 0.0;
 
-    this.addTrack = function(points){
+    this.getDistance = function(){
+      return _distance;
+    }
+    this.getPoint = function(index){
+      return _track[index];
+    }
 
+    this.addTrack = function(points){
+      var track = this;
+      points.forEach(function(point){
+        track.addPoint(point);
+      });
     }
     
     /**
      * adds a point to the track
      *
      * Syntax:
-     *   addPoint([lon,lat,height,time]);
-     *   addPoint(lon,lat,height,time);
-     *   addPoint(lon,lat,height);
-     *   addPoint(lon,lat,null,time);
-     *   addPoint(lon,lat);
+     *   addPoint([lat,lon,height,time]);
+     *   addPoint(lat,lon,height,time);
+     *   addPoint(lat,lon,height);
+     *   addPoint(lat,lon,null,time);
+     *   addPoint(lat,lon);
      * 
      * @param {[type]} point [description]
      */
@@ -89,25 +103,22 @@ var vinylEarth = {};
 
       var new_point = null;
 
-      if(point.length === 2 || (point.length > 2 && !point[2]){
+      if(point.length === 2 || (point.length > 2 && !point[2])){
         // set to "sea level"
         point[2] = 0;
       }
 
       if(point.length === 3){
-        new_point = new vinylEarth.Point([point[0],point[1],point[2]]);
+        new_point = new vinylEarth.LatLonE(point[0],point[1],point[2]);
       }else{
-        new_point = new vinylEarth.Point([point[0],point[1],point[2]], point[3]);
+        new_point = new vinylEarth.LatLonE(point[0],point[1],point[2], point[3]);
       }
 
-      var track_length = this._track.push(new_point);
+      var track_length = _track.push(new_point);
       if(track_length > 1){
-        try{
-          var length = this._segments.push(new vinylEarth.Segment(this._track[track_length-2], new_point))
-        }catch(e){
-          throw "All track points must be of the same dimensions";
-        }
-        _distance += this._segments[length-1].distance()
+        var length = _segments.push(new vinylEarth.Segment(_track[track_length-2], new_point));
+        _segments_distances.push(_distance);
+        _distance += _segments[length-1].getDistance();
       }
     }
 
@@ -117,14 +128,36 @@ var vinylEarth = {};
      * @param  {function} reducer a reducer function to convert from geographic to 
      * @return {[type]}         [description]
      */
-    this.generate = function(count, reducer){
+    this.generatePointsOnTrack = function(num_points){
+      var track_traveled = 0;
+      var step = _distance / (num_points - 1);
+      var points = [_track[0]]; // initiallize with the beginning of the line
+      track_traveled += step;
+      
+      // found I had to bias the distance a little short
+      // due to rounding issue when points land near track points
+      var bumper = 0.0001;
 
+      for(var i = 0; i < _segments.length; i++){
+        while(track_traveled - bumper <= _segments_distances[i] + _segments[i].getDistance()){
+          var distance_on_segment = track_traveled - _segments_distances[i];
+          points.push(_segments[i].pointByDistance(track_traveled - bumper - _segments_distances[i]))
+          track_traveled += step;
+        }
+      }
+      return points;
+    }
+
+    this.generateNumbers = function(count, reducer){
+      var points = this.generatePointsOnTrack(count);
+      var numbers = [];
+      points.forEach(function(point){
+        numbers.push(reducer(point));
+      })
+      return numbers;
     }
   }
 
-  
-
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = vinylEarth;
-  }
+if (typeof module != 'undefined' && module.exports) module.exports = vinylEarth; // CommonJS
+if (typeof define == 'function' && define.amd) define([], function() { return vinylEarth; }); // AMD
 })();

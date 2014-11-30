@@ -10,7 +10,16 @@
   <div id="qunit-fixture"></div>
   <script src="http://code.jquery.com/qunit/qunit-1.15.0.js"></script>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.15/require.min.js"></script>
-  <script src="../vinyl-earth.js"></script>
-  <script src="tests.js"></script>
+  <script>
+	  require([
+	  	"../geodesy/vector3D.js",
+	  	"../geodesy/geo.js",
+	  	"../geodesy/latlon-ellipsoid.js",
+	  	"../geodesy/latlon-vincenty.js",
+	  	"../vinyl-earth.js",
+	  	"tests.js"
+  	]);
+  </script>
+
 </body>
 </html>
