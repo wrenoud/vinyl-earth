@@ -104,7 +104,6 @@
         $('#numbers').val(pretty_numbers);
       }
 
-
       var trackLeft = null;
       var trackRight = null;
       var drawtrack = function(){
@@ -149,7 +148,7 @@
 
       // check for points in the href, set the as the points if found
       var start_start_lat, start_start_lon, start_end_lat, start_end_lon;
-      var matches = /#(.*?),(.*?),(.*?),(.*?)/.exec(window.location.href);
+      var matches = /#(.*?),(.*?),(.*?),(.*)$/.exec(window.location.href);
       if(matches){
         start_start_lat = matches[1];
         start_start_lon = matches[2];
