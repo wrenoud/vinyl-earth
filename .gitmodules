@@ -1,3 +1,6 @@
 [submodule "jquery-locationpicker-plugin"]
 	path = jquery-locationpicker-plugin
 	url = https://github.com/Logicify/jquery-locationpicker-plugin.git
+[submodule "geodesy"]
+	path = geodesy
+	url = https://github.com/chrisveness/geodesy.git
