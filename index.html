@@ -104,16 +104,6 @@
         $('#numbers').val(pretty_numbers);
       }
 
-      $(function(){
-        // check for points in the href, set the as the points if found
-        var matches = /#(.*?),(.*?),(.*?),(.*?)/.exec(window.location.href);
-        if(matches){
-          $("#start-lat").val(matches[1]);
-          $("#start-lon").val(matches[2]);
-          $("#end-lat").val(matches[3]);
-          $("#end-lon").val(matches[4]);          
-        }
-      })
 
       var trackLeft = null;
       var trackRight = null;
@@ -157,8 +147,23 @@
 
       };
 
+      // check for points in the href, set the as the points if found
+      var start_start_lat, start_start_lon, start_end_lat, start_end_lon;
+      var matches = /#(.*?),(.*?),(.*?),(.*?)/.exec(window.location.href);
+      if(matches){
+        start_start_lat = matches[1];
+        start_start_lon = matches[2];
+        start_end_lat = matches[3];
+        start_end_lon = matches[4];          
+      }else{
+        start_start_lat = 40.7127;
+        start_start_lon = -74.0059;
+        start_end_lat = 48.857;
+        start_end_lon = 2.351;          
+      }
+
     	$('#start').locationpicker({
-    		location: {latitude: 40.7127 , longitude: -74.0059},
+    		location: {latitude: start_start_lat, longitude: start_start_lon},
         radius: 0,
         zoom: 4,
     		inputBinding: {
@@ -174,7 +179,7 @@
         enableAutocomplete: true,
     	});
     	$('#end').locationpicker({
-    		location: {latitude: 48.857, longitude: 2.351},	
+    		location: {latitude: start_end_lat, longitude: start_end_lon},	
         radius: 0,
         zoom: 4,
     		inputBinding: {
