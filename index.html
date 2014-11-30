@@ -80,7 +80,7 @@
         </div>
         <div class="col-sm-6 ">
           <div class="">
-            <label class="control-label">Some seedy goodnes</label>
+            <label class="control-label">Some seedy goodness</label>
             <div class="form-group">
               <textarea id="numbers" class="form-control" rows=8></textarea>
             </div>
@@ -104,28 +104,57 @@
         $('#numbers').val(pretty_numbers);
       }
 
-      var flightPathLeft = null;
-      var flightPathRight = null;
-      var drawtrack = function(){
+      $(function(){
+        // check for points in the href, set the as the points if found
+        var matches = /#(.*?),(.*?),(.*?),(.*?)/.exec(window.location.href);
+        if(matches){
+          $("#start-lat").val(matches[1]);
+          $("#start-lon").val(matches[2]);
+          $("#end-lat").val(matches[3]);
+          $("#end-lon").val(matches[4]);          
+        }
+      })
 
-        if(flightPathLeft){
-          flightPathLeft.getPath().setAt(0, new google.maps.LatLng($("#start-lat").val(), $("#start-lon").val()));
-          flightPathLeft.getPath().setAt(1, new google.maps.LatLng($("#end-lat").val(), $("#end-lon").val()));
-          flightPathRight.getPath().setAt(0, new google.maps.LatLng($("#start-lat").val(), $("#start-lon").val()));
-          flightPathRight.getPath().setAt(1, new google.maps.LatLng($("#end-lat").val(), $("#end-lon").val()));
+      var trackLeft = null;
+      var trackRight = null;
+      var drawtrack = function(){
+        // grab the positions
+        var start_lat = $("#start-lat").val();
+        var start_lon = $("#start-lon").val();
+        var end_lat = $("#end-lat").val();
+        var end_lon = $("#end-lon").val();
+
+        // update the url for sharing
+        var oldUrl = window.location.href
+        var newUrl = '';
+        var trackid = "#"+start_lat+","+start_lon+","+end_lat+","+end_lon
+        if(oldUrl.indexOf('#') > 0){
+          newUrl = oldUrl.replace(/#.*$/g,trackid);
         }else{
+          newUrl = oldUrl + trackid;
+        }
+        window.history.pushState('','',trackid);
+
+        // set up the flight paths
+        if(!trackLeft){
           var options = {
-            path: [new google.maps.LatLng($("#start-lat").val(), $("#start-lon").val()), new google.maps.LatLng($("#end-lat").val(), $("#end-lon").val())],
+            path: [new google.maps.LatLng(start_lat, start_lon), new google.maps.LatLng(end_lat, end_lon)],
             geodesic: true,
             strokeColor: '#FF0000',
             strokeOpacity: 1.0,
             strokeWeight: 2
           }
-          flightPathLeft = new google.maps.Polyline(options);
-          flightPathLeft.setMap($('#start').locationpicker('map').map);
-          flightPathRight = new google.maps.Polyline(options);
-          flightPathRight.setMap($('#end').locationpicker('map').map);
+          trackLeft = new google.maps.Polyline(options);
+          trackLeft.setMap($('#start').locationpicker('map').map);
+          trackRight = new google.maps.Polyline(options);
+          trackRight.setMap($('#end').locationpicker('map').map);
+        }else{
+          trackLeft.getPath().setAt(0, new google.maps.LatLng(start_lat, start_lon));
+          trackLeft.getPath().setAt(1, new google.maps.LatLng(end_lat, end_lon));
+          trackRight.getPath().setAt(0, new google.maps.LatLng(start_lat, start_lon));
+          trackRight.getPath().setAt(1, new google.maps.LatLng(end_lat, end_lon));
         }
+
       };
 
     	$('#start').locationpicker({
