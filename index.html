@@ -155,7 +155,7 @@
         start_end_lat = matches[3];
         start_end_lon = matches[4];
         $('#seed_count').val(matches[5]);
-        $('#reducer').val(encodeURIComponent(matches[6]));
+        $('#reducer').val(decodeURIComponent(matches[6]));
       }else{
         start_start_lat = 40.7127;
         start_start_lon = -74.0059;
